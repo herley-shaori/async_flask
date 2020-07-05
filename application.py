@@ -30,6 +30,7 @@ __author__ = 'slynn'
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 app.config['DEBUG'] = True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 #turn the flask app into a socketio app
 socketio = SocketIO(app, async_mode=None, logger=True, engineio_logger=True)
@@ -45,12 +46,32 @@ def randomNumberGenerator():
     """
     #infinite loop of magical random numbers
     print("Making random numbers")
+    global kondisi;
+    kondisi = True
     while not thread_stop_event.isSet():
-        number = round(random()*10, 3)
-        print(number)
-        socketio.emit('newnumber', {'number': number}, namespace='/test')
-        socketio.sleep(5)
+        konten = None
+        alamat_gambar = ''
+        angka = None
 
+        if(kondisi):
+        	print('Sedang dalam kondisi TRUE.')
+        	alamat_gambar = 'static/images/1.JPG'
+        	angka = 1
+        	kondisi = False
+        else:
+        	print('Sedang dalam kondisi FALSE.')
+        	alamat_gambar = 'static/images/2.JPG'
+        	angka = 0
+        	kondisi = True
+
+        with open('data/text/teks.txt') as f:
+            konten = f.readlines()
+        number = round(random()*10, 3)
+        print('Angkanya: ',angka)
+
+        socketio.emit('newnumber', {'number': angka}, namespace='/test')
+        # socketio.emit('newnumber', {'number': angka}, namespace='/uji')
+        socketio.sleep(1)
 
 @app.route('/')
 def index():

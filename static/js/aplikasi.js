@@ -1,7 +1,7 @@
 
 $(document).ready(function(){
     //connect to the socket server.
-    var socket = io.connect('http://' + document.domain + ':' + location.port + '/test');
+    var socket = io.connect('http://' + document.domain + ':' + location.port + '/uji');
     var numbers_received = [];
 
     console.log('Alamat Socket: ' + socket)
@@ -19,19 +19,15 @@ $(document).ready(function(){
         //     numbers_string = numbers_string + '<p>' + numbers_received[i].toString() + '</p>';
         // }
 
-
+        alamat_absolut = 'static/images/2.JPG'
+        $("#gambar_saya").attr("src",alamat_absolut);
         var nomor = numbers_received[0]
-        var alamat_absolut = ''
         if(nomor == 0){
-            alamat_absolut = 'static/images/2.JPG'
-            $('#log').html(alamat_absolut);
-            $("#gambar_saya").attr("src",alamat_absolut);
+        	$('#alamat_citra').html('Makan');
         }else{
-            alamat_absolut = 'static/images/1.JPG'
-            $('#log').html(alamat_absolut);
-            $("#gambar_saya").attr("src",alamat_absolut);
-        }
-        // $('#log').html(numbers_string);
+        	$('#alamat_citra').html('Minum');
+        }      
+        // $('#alamat_citra').html(nomor);
     });
 
 });
