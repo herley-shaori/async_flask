@@ -14,11 +14,11 @@ $(document).ready(function(){
             numbers_received.shift()
         }            
         numbers_received.push(msg.number);
+        
         // numbers_string = '';
         // for (var i = 0; i < numbers_received.length; i++){
         //     numbers_string = numbers_string + '<p>' + numbers_received[i].toString() + '</p>';
         // }
-
 
         var nomor = numbers_received[0]
         var alamat_absolut = ''
@@ -30,6 +30,7 @@ $(document).ready(function(){
             alamat_absolut = 'static/images/1.JPG'
             $('#log').html(alamat_absolut);
             $("#gambar_saya").attr("src",alamat_absolut);
+            $('.music').html('<audio controls autoplay> <source src="static/audio/halo.mp3"  type="audio/mpeg"> </audio>');
         }
         // $('#log').html(numbers_string);
     });

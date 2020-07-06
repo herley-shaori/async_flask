@@ -67,11 +67,13 @@ def randomNumberGenerator():
         with open('data/text/teks.txt') as f:
             konten = f.readlines()
         number = round(random()*10, 3)
-        print('Angkanya: ',angka)
 
         socketio.emit('newnumber', {'number': angka}, namespace='/test')
-        # socketio.emit('newnumber', {'number': angka}, namespace='/uji')
-        socketio.sleep(1)
+        
+        if(kondisi):
+            socketio.sleep(4)
+        else:
+            socketio.sleep(0.5)
 
 @app.route('/')
 def index():
