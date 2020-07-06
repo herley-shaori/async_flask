@@ -68,7 +68,7 @@ def randomNumberGenerator():
             konten = f.readlines()
         number = round(random()*10, 3)
 
-        socketio.emit('newnumber', {'number': angka}, namespace='/test')
+        socketio.emit('newnumber', {'number': angka, 'satu':1}, namespace='/test')
         
         if(kondisi):
             socketio.sleep(4)
