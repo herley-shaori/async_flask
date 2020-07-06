@@ -73,7 +73,7 @@ def randomNumberGenerator():
         if(kondisi):
             socketio.sleep(4)
         else:
-            socketio.sleep(0.5)
+            socketio.sleep(10)
 
 @app.route('/')
 def index():
