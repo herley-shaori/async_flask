@@ -24,8 +24,10 @@ from flask import Flask, render_template, url_for, copy_current_request_context
 from random import random
 from time import sleep
 from threading import Thread, Event
+import os
+import pandas as pd
 
-__author__ = 'slynn'
+__author__ = 'slynn|herley'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -40,40 +42,78 @@ thread = Thread()
 thread_stop_event = Event()
 
 def randomNumberGenerator():
-    """
-    Generate a random number every 1 second and emit to a socketio instance (broadcast)
-    Ideally to be run in a separate thread?
-    """
-    #infinite loop of magical random numbers
-    print("Making random numbers")
-    global kondisi;
-    kondisi = True
+    kondisi = None
+    # Jumlah frame minimal dengan keterangan_data.csv (berisi keterangan kelas setiap citra).
+    jumlah_frame_minimal = 11
+    indeks_gambar_sekarang = 0
+  
     while not thread_stop_event.isSet():
+        ada_gambar = False
         konten = None
         alamat_gambar = ''
         angka = None
 
-        if(kondisi):
-        	print('Sedang dalam kondisi TRUE.')
-        	alamat_gambar = 'static/images/1.JPG'
-        	angka = 1
-        	kondisi = False
-        else:
-        	print('Sedang dalam kondisi FALSE.')
-        	alamat_gambar = 'static/images/2.JPG'
-        	angka = 0
-        	kondisi = True
+        # Periksa jumlah berkas dalam satu folder. Diminta minimal ada 10 frame untuk melakukan simulasi.
+        img_folder_path = 'static/images'
+        dirListing = os.listdir(img_folder_path)
+        print('Jumlah Berkas: ', len(dirListing))
 
-        with open('data/text/teks.txt') as f:
-            konten = f.readlines()
-        number = round(random()*10, 3)
+        if(len(dirListing) >= jumlah_frame_minimal):
+            keterangan = pd.read_csv('static/images/keterangan_data.csv')
+            if(keterangan.shape[0] == (len(dirListing) - 1)):
+                
+                larik_gambar = keterangan['citra']
+                kelas = keterangan['kelas']
 
-        socketio.emit('newnumber', {'number': angka, 'satu':1}, namespace='/test')
-        
-        if(kondisi):
-            socketio.sleep(4)
+                alamat_gambar = 'static/images/'+str(larik_gambar[indeks_gambar_sekarang])+'.JPG'
+                kelas_gambar = kelas[indeks_gambar_sekarang]
+
+                if(kelas_gambar == 0):
+                    kondisi = True
+                else:
+                    kondisi = False
+
+                print('Indeks gambar sekarang: ', indeks_gambar_sekarang)
+                print('Alamat Gambar sekarang: ', alamat_gambar)
+
+                if(kondisi):
+                	# print('Sedang dalam kondisi TRUE.')
+                	# alamat_gambar = 'static/images/1.JPG'
+                	angka = 1
+                	kondisi = False
+                else:
+                	# print('Sedang dalam kondisi FALSE.')
+                	# alamat_gambar = 'static/images/2.JPG'
+                	angka = 0
+                	kondisi = True
+
+                with open('data/text/teks.txt') as f:
+                    konten = f.readlines()
+                number = round(random()*10, 3)
+
+                # Tidak bisa lanjut karena javascript menggunakan hard-code.
+                socketio.emit('newnumber', {'number': angka, 'satu':1}, namespace='/test')
+                # socketio.emit('newnumber', {'number': angka, 'satu':1}, namespace='/test')
+                
+                indeks_gambar_sekarang+=1
+                print('Indeks gambar sekarang: ', indeks_gambar_sekarang)
+                # Normalisasi indeks_gambar_sekarang dan hapus semua berkas dalam direktori.
+                if(indeks_gambar_sekarang == (jumlah_frame_minimal-1)):
+                    indeks_gambar_sekarang = 0
+
+                if(kondisi):
+                    socketio.sleep(1)
+                else:
+                    socketio.sleep(1)
+
+            else:
+                print("Jumlah label citra: ", keterangan.shape[0], "tidak sama dengan jumlah data citra pada direktori: ", len(dirListing))
+                print('Menunggu pembaruan citra...')
         else:
-            socketio.sleep(10)
+            print('Menunggu frame tambahan setiap 1 detik sekali...')
+            print('Menunggu', (jumlah_frame_minimal - len(dirListing)), 'frame lagi.')
+            print('-----------------------------------------------------------------')
+            socketio.sleep(1)
 
 @app.route('/')
 def index():
