@@ -46,65 +46,56 @@ def randomNumberGenerator():
     # Jumlah frame minimal dengan keterangan_data.csv (berisi keterangan kelas setiap citra).
     jumlah_frame_minimal = 11
     indeks_gambar_sekarang = 0
-  
+    
+    angka = None
     while not thread_stop_event.isSet():
         ada_gambar = False
         konten = None
         alamat_gambar = ''
-        angka = None
 
-        # Periksa jumlah berkas dalam satu folder. Diminta minimal ada 10 frame untuk melakukan simulasi.
+        # Pembaruan video.
+        if(angka == 2):
+            socketio.emit('newnumber', {'number': angka}, namespace='/test')
+            print('Script pembersih telah dijalankan: ', angka)
+
+        # Periksa jumlah berkas dalam satu folder. Diminta minimal ada 10 frame untuk melakukan simulasi. Keterangan ini deprecated, akan dihapus.
         img_folder_path = 'static/images'
         dirListing = os.listdir(img_folder_path)
-        print('Jumlah Berkas: ', len(dirListing))
 
         if(len(dirListing) >= jumlah_frame_minimal):
             keterangan = pd.read_csv('static/images/keterangan_data.csv')
             if(keterangan.shape[0] == (len(dirListing) - 1)):
-                
-                larik_gambar = keterangan['citra']
-                kelas = keterangan['kelas']
 
-                alamat_gambar = 'static/images/'+str(larik_gambar[indeks_gambar_sekarang])+'.JPG'
-                kelas_gambar = kelas[indeks_gambar_sekarang]
-
-                if(kelas_gambar == 0):
-                    kondisi = True
-                else:
-                    kondisi = False
-
-                print('Indeks gambar sekarang: ', indeks_gambar_sekarang)
-                print('Alamat Gambar sekarang: ', alamat_gambar)
-
-                if(kondisi):
-                	# print('Sedang dalam kondisi TRUE.')
-                	# alamat_gambar = 'static/images/1.JPG'
-                	angka = 1
-                	kondisi = False
-                else:
-                	# print('Sedang dalam kondisi FALSE.')
-                	# alamat_gambar = 'static/images/2.JPG'
-                	angka = 0
-                	kondisi = True
-
-                with open('data/text/teks.txt') as f:
-                    konten = f.readlines()
-                number = round(random()*10, 3)
-
-                # Tidak bisa lanjut karena javascript menggunakan hard-code.
-                socketio.emit('newnumber', {'number': angka, 'satu':1}, namespace='/test')
-                # socketio.emit('newnumber', {'number': angka, 'satu':1}, namespace='/test')
-                
                 indeks_gambar_sekarang+=1
-                print('Indeks gambar sekarang: ', indeks_gambar_sekarang)
                 # Normalisasi indeks_gambar_sekarang dan hapus semua berkas dalam direktori.
                 if(indeks_gambar_sekarang == (jumlah_frame_minimal-1)):
-                    indeks_gambar_sekarang = 0
-
-                if(kondisi):
-                    socketio.sleep(1)
+                    # indeks_gambar_sekarang = 0
+                    angka = 2
                 else:
-                    socketio.sleep(1)
+                    if(indeks_gambar_sekarang < 10):
+                        kelas = keterangan['kelas']
+                        print('Indeks Gambar Sekarang: ', indeks_gambar_sekarang)
+                        kelas_gambar = kelas[indeks_gambar_sekarang]
+                        if(kelas_gambar == 1):
+                            kondisi = True
+                        else:
+                            kondisi = False
+
+                        if(kondisi):
+                            angka = 1
+                        else:
+                            angka = 0
+
+                        with open('data/text/teks.txt') as f:
+                            konten = f.readlines()
+                        # Buka untuk uji emisi angka.
+                        # number = round(random()*10, 3)
+                        socketio.emit('newnumber', {'number': angka}, namespace='/test')
+
+                        if(kondisi):
+                            socketio.sleep(4)
+                        else:
+                            socketio.sleep(1)
 
             else:
                 print("Jumlah label citra: ", keterangan.shape[0], "tidak sama dengan jumlah data citra pada direktori: ", len(dirListing))
