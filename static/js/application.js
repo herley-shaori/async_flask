@@ -26,16 +26,14 @@ $(document).ready(function(){
         var alamat_absolut = ''
         if(nomor == 0){
         }else if(nomor == 1){
-            // Tidak bisa dipakai karena video akan diunggah terus menerus sesuai dengan thread yang sedang berjalan.
-            // $('.video').html('<video controls autoplay> <source src="static/video/luaran.mp4" type="video/mp4"> </video>');
             $('.music').html('<audio controls autoplay> <source src="static/audio/halo.mp3"  type="audio/mpeg"> </audio>');
-        }else{
+            // $("#video_saya").attr("src","static/video/luaran.mp4");
+        }else if(nomor ==2 ){
             $('#log').html('Berkas telah selesai diputar.');
-            $('.music').html('<audio controls> <source src=""  type="audio/mpeg"> </audio>');
+            $('.music').html('<audio controls> <source src="" type="audio/mpeg"> </audio>');
             $("#video_saya").attr("src","");
+        }else if(nomor == 3){
+            $('#log').html('Menunggu video baru.....');
         }
-
-        // $('#log').html(numbers_string);
     });
-
 });

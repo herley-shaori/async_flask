@@ -15,8 +15,11 @@ Updated 13th April 2018
 
 """
 
-
-
+# Keterangan indeks angka:
+# 0 --> kelas 0.
+# 1 --> kelas 1.
+# 2 --> aplikasi berhenti.
+# 3 --> menunggu video baru.
 
 # Start with a basic flask app webpage.
 from flask_socketio import SocketIO, emit
@@ -44,66 +47,59 @@ thread_stop_event = Event()
 def randomNumberGenerator():
     kondisi = None
     # Jumlah frame minimal dengan keterangan_data.csv (berisi keterangan kelas setiap citra).
-    jumlah_frame_minimal = 11
-    indeks_gambar_sekarang = 0
+    jumlah_frame_minimal = 10
+    frame_sekarang = 0
     
     angka = None
     while not thread_stop_event.isSet():
         ada_gambar = False
         konten = None
-        alamat_gambar = ''
 
         # Pembaruan video.
         if(angka == 2):
             socketio.emit('newnumber', {'number': angka}, namespace='/test')
             print('Script pembersih telah dijalankan: ', angka)
+            # Kembalikan pemutaran video jika video baru sudah ada.
+            dirListing = os.listdir(video_folder_path)
+            if(dirListing > 0):
+                angka = -1
+                frame_sekarang = 0
 
-        # Periksa jumlah berkas dalam satu folder. Diminta minimal ada 10 frame untuk melakukan simulasi. Keterangan ini deprecated, akan dihapus.
-        img_folder_path = 'static/images'
-        dirListing = os.listdir(img_folder_path)
 
-        if(len(dirListing) >= jumlah_frame_minimal):
-            keterangan = pd.read_csv('static/images/keterangan_data.csv')
-            if(keterangan.shape[0] == (len(dirListing) - 1)):
-
-                indeks_gambar_sekarang+=1
-                # Normalisasi indeks_gambar_sekarang dan hapus semua berkas dalam direktori.
-                if(indeks_gambar_sekarang == (jumlah_frame_minimal-1)):
-                    # indeks_gambar_sekarang = 0
-                    angka = 2
-                else:
-                    if(indeks_gambar_sekarang < 10):
-                        kelas = keterangan['kelas']
-                        print('Indeks Gambar Sekarang: ', indeks_gambar_sekarang)
-                        kelas_gambar = kelas[indeks_gambar_sekarang]
-                        if(kelas_gambar == 1):
-                            kondisi = True
-                        else:
-                            kondisi = False
-
-                        if(kondisi):
-                            angka = 1
-                        else:
-                            angka = 0
-
-                        with open('data/text/teks.txt') as f:
-                            konten = f.readlines()
-                        # Buka untuk uji emisi angka.
-                        # number = round(random()*10, 3)
-                        socketio.emit('newnumber', {'number': angka}, namespace='/test')
-
-                        if(kondisi):
-                            socketio.sleep(4)
-                        else:
-                            socketio.sleep(1)
-
+        # Direktori Video.
+        video_folder_path = 'static/video' 
+        dirListing = os.listdir(video_folder_path)
+        if(len(dirListing) > 0):
+            keterangan = pd.read_csv('static/label/keterangan_data.csv')
+            frame_sekarang+=1
+            # Normalisasi frame_sekarang dan hapus semua berkas dalam direktori.
+            if(frame_sekarang == (jumlah_frame_minimal)):
+                angka = 2
             else:
-                print("Jumlah label citra: ", keterangan.shape[0], "tidak sama dengan jumlah data citra pada direktori: ", len(dirListing))
-                print('Menunggu pembaruan citra...')
+                if(frame_sekarang < jumlah_frame_minimal):
+                    kelas = keterangan['kelas']
+                    kelas_gambar = kelas[frame_sekarang]
+                    if(kelas_gambar == 1):
+                        kondisi = True
+                    else:
+                        kondisi = False
+
+                    if(kondisi):
+                        angka = 1
+                    else:
+                        angka = 0
+
+                    # Buka untuk uji emisi angka.
+                    # number = round(random()*10, 3)
+                    socketio.emit('newnumber', {'number': angka}, namespace='/test')
+                    if(kondisi):
+                        socketio.sleep(4)
+                    else:
+                        socketio.sleep(1)
         else:
-            print('Menunggu frame tambahan setiap 1 detik sekali...')
-            print('Menunggu', (jumlah_frame_minimal - len(dirListing)), 'frame lagi.')
-            print('-----------------------------------------------------------------')
+            print('Menunggu video baru...')
+            angka = 3
+            socketio.emit('newnumber', {'number': angka}, namespace='/test')
             socketio.sleep(1)
 
 @app.route('/')
