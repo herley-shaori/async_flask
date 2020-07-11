@@ -45,3 +45,4 @@ if(len(image_list) == len(class_list)):
 	os.system('ffmpeg -i video.avi luaran.mp4 -y')
 else:
 	print("Panjang kelas dan jumlah gambar tidak sama.")
+
