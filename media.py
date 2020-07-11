@@ -61,6 +61,6 @@ if(len(image_list) == len(class_list)):
 	os.remove("video.mp4")
 	os.remove("video.avi")
 	os.remove("suara_gabungan.mp3")
-	os.rename('video_jadi.mp4', 'video.mp4')
+	os.rename('video_jadi.mp4', 'static/video/video.mp4')
 else:
 	print("Panjang kelas dan jumlah gambar tidak sama.")
