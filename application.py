@@ -15,13 +15,17 @@ Updated 13th April 2018
 
 """
 
-# Keterangan indeks angka:
+# Keterangan indeks angka (legacy):
 # 0 --> kelas 0.
 # 1 --> kelas 1.
 # 2 --> aplikasi berhenti.
 # 3 --> menunggu video baru.
-
 # Start with a basic flask app webpage.
+
+# Keterangan indeks angka:
+# 0 --> video selesai.
+# 1 --> video mulai.
+
 from flask_socketio import SocketIO, emit
 from flask import Flask, render_template, url_for, copy_current_request_context
 from random import random
@@ -29,6 +33,8 @@ from time import sleep
 from threading import Thread, Event
 import os
 import pandas as pd
+import subprocess
+import math
 
 __author__ = 'slynn|herley'
 
@@ -44,7 +50,15 @@ socketio = SocketIO(app, async_mode=None, logger=True, engineio_logger=True)
 thread = Thread()
 thread_stop_event = Event()
 
-def randomNumberGenerator():
+def getVideoDuration(filename):
+    result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                             "format=duration", "-of",
+                             "default=noprint_wrappers=1:nokey=1", filename],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    return math.ceil(float(result.stdout))
+
+def videoSignalDispatcher():
     kondisi = None
     # Jumlah frame minimal dengan keterangan_data.csv (berisi keterangan kelas setiap citra).
     jumlah_frame_minimal = 10
@@ -65,42 +79,22 @@ def randomNumberGenerator():
                 angka = -1
                 frame_sekarang = 0
 
-
         # Direktori Video.
         video_folder_path = 'static/video' 
         dirListing = os.listdir(video_folder_path)
         if(len(dirListing) > 0):
-            keterangan = pd.read_csv('static/label/keterangan_data.csv')
-            frame_sekarang+=1
-            # Normalisasi frame_sekarang dan hapus semua berkas dalam direktori.
-            if(frame_sekarang == (jumlah_frame_minimal)):
-                angka = 2
-            else:
-                if(frame_sekarang < jumlah_frame_minimal):
-                    kelas = keterangan['kelas']
-                    kelas_gambar = kelas[frame_sekarang]
-                    if(kelas_gambar == 1):
-                        kondisi = True
-                    else:
-                        kondisi = False
-
-                    if(kondisi):
-                        angka = 1
-                    else:
-                        angka = 0
-
-                    # Buka untuk uji emisi angka.
-                    # number = round(random()*10, 3)
-                    socketio.emit('newnumber', {'number': angka}, namespace='/test')
-                    if(kondisi):
-                        socketio.sleep(4)
-                    else:
-                        socketio.sleep(1)
+            # Pastikan hanya ada satu video pada direktori static/video
+            socketio.emit('newnumber', {'number': 1}, namespace='/test')
+            print("waktu tidur: ", getVideoDuration('static/video/video.mp4'))
+            socketio.sleep(getVideoDuration('static/video/video.mp4'))
+            socketio.emit('newnumber', {'number': 0}, namespace='/test')
+            os.remove("static/video/video.mp4")
+            print('Video telah dihapus')
         else:
             print('Menunggu video baru...')
             angka = 3
             socketio.emit('newnumber', {'number': angka}, namespace='/test')
-            socketio.sleep(1)
+            socketio.sleep(5)
 
 @app.route('/')
 def index():
@@ -116,7 +110,7 @@ def test_connect():
     #Start the random number generator thread only if the thread has not been started before.
     if not thread.isAlive():
         print("Starting Thread")
-        thread = socketio.start_background_task(randomNumberGenerator)
+        thread = socketio.start_background_task(videoSignalDispatcher)
 
 @socketio.on('disconnect', namespace='/test')
 def test_disconnect():
